@@ -36,7 +36,7 @@ jobs:
           pip install --upgrade platformio
 
       - name: Buduj firmware (tylko Twój env)
-        run: pio run -e waveshare_esp32s3_rs485_can
+        run: pio run -e waveshare-esp32-s3-RS485-CAN
 
       - name: Zapisz firmware jako artifact (do pobrania)
         uses: actions/upload-artifact@v4
