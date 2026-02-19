@@ -1,22 +1,28 @@
 name: Build PlatformIO Firmware (ESP32-S3 Waveshare)
 
+# Trigger the workflow on:
+# - push to main, master, develop branches
+# - pull requests targeting main/master
+# - manual run from GitHub UI
 on:
   push:
-    branches: [ main, master, develop ]     # możesz zmienić na inne branche
+    branches: [main, master, develop]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:                        # pozwala uruchomić ręcznie z GitHub UI
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Pobierz kod repozytorium
+      # Checkout the repository code (including submodules if you use git-based libraries)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive               # na wszelki wypadek jeśli masz biblioteki z gita
+          submodules: recursive
 
-      - name: Cache PlatformIO (przyspiesza kolejne buildy)
+      # Cache PlatformIO dependencies and pip to speed up future builds
+      - name: Cache PlatformIO
         uses: actions/cache@v4
         with:
           path: |
@@ -25,24 +31,36 @@ jobs:
           key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
           restore-keys: ${{ runner.os }}-platformio-
 
-      - name: Zainstaluj Python
+      # Set up Python (PlatformIO needs it)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Zainstaluj PlatformIO
+      # Install latest PlatformIO Core
+      - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
 
-      - name: Buduj firmware (tylko Twój env)
+      # Build the firmware for your specific environment
+      - name: Build firmware
         run: pio run -e waveshare-esp32-s3-RS485-CAN
 
-      - name: Zapisz firmware jako artifact (do pobrania)
+      # Rename firmware.bin → my-firmware-latest.bin (fixed name)
+      # Copy it to a clean directory so artifact has predictable structure
+      - name: Prepare artifact with fixed name
+        run: |
+          mkdir -p artifact
+          cp .pio/build/waveshare-esp32-s3-RS485-CAN/firmware.bin artifact/my-firmware-latest.bin
+
+      # Upload the renamed binary as artifact → visible in GitHub UI under "Artifacts"
+      - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-waveshare-esp32s3
-          path: .pio/build/waveshare-esp32-s3-RS485-CAN/firmware.bin
+          name: esp32s3-firmware
+          path: artifact/my-firmware-latest.bin
           if-no-files-found: error
           compression-level: 6
-          retention-days: 14                  # pliki zostają 14 dni
+          retention-days: 90          # longer retention – change as needed
+          
