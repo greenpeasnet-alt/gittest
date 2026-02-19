@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: firmware-waveshare-esp32s3
-          path: .pio/build/waveshare_esp32s3_rs485_can/firmware.bin
+          path: .pio/build/waveshare-esp32-s3-RS485-CAN/firmware.bin
           if-no-files-found: error
           compression-level: 6
           retention-days: 14                  # pliki zostają 14 dni
